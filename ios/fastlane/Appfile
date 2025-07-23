@@ -1,5 +1,4 @@
 app_identifier("com.example.flutter3270.dev") # The bundle identifier of your app
-apple_id("ducvip131199@icloud.com") # Your Apple Developer Portal username
 
 itc_team_id("125354536") # App Store Connect Team ID
 team_id("K8L45AHLHB") # Developer Portal Team ID

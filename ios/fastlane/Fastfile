@@ -21,18 +21,20 @@ platform :ios do
       app_identifier: "com.example.flutter3270.dev"
     )
 
-    # Enable automatic signing
-    update_code_signing_settings(
-      use_automatic_signing: true,
-      team_id: team_id,
-      bundle_identifier: "com.example.flutter3270.dev",
-      path: "Runner.xcodeproj"
-    )
+#     # Enable automatic signing
+#     update_code_signing_settings(
+#       use_automatic_signing: true,
+#       team_id: team_id,
+#       bundle_identifier: "com.example.flutter3270.dev",
+#       path: "Runner.xcodeproj"
+#     )
 
     # Increment build number
     increment_build_number(
       xcodeproj: "Runner.xcodeproj"
     )
+
+    enable_automatic_code_signing(path: "Runner.xcodeproj")
 
     # Build development version (không cần App Store Connect)
     build_app(
@@ -57,15 +59,41 @@ platform :ios do
     UI.success("✅ Development build completed: ./build/flutter_3270_dev.ipa")
   end
 
+  desc "Setup certificates and provisioning profiles"
+  lane :certificates do |options|
+    match(
+      type: "appstore",
+      app_identifier: "com.example.flutter3270.dev",
+      git_url: "git@github.com-global:ducphan1311/fastlane_certificate.git",
+      verbose: true,
+      force_for_new_devices: true,
+      shallow_clone: true,
+      api_key: options[:api_key]
+    )
+  end
+
   desc "Build and upload to TestFlight"
   lane :dev do
-    # Build development version trước
+    # Create the App Store Connect API key object.
+    # This requires you to set three environment variables:
+    # 1. APP_STORE_CONNECT_KEY_ID: Your API Key ID from App Store Connect.
+    # 2. APP_STORE_CONNECT_ISSUER_ID: Your Issuer ID from App Store Connect.
+    # 3. APP_STORE_CONNECT_API_KEY_PATH: The absolute path to your .p8 API key file.
+    api_key = app_store_connect_api_key(
+      key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
+      issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
+      key_filepath: ENV["APP_STORE_CONNECT_API_KEY_PATH"]
+    )
+
+    # Setup certificates first, passing the API key
+    certificates(api_key: api_key)
+    
+    # Build development version
     dev_build
 
-    # Sau đó upload manual
+    # Upload to TestFlight using the generated API key.
     upload_to_testflight(
-      username: "ducvip131199@icloud.com",
-      app_identifier: "com.example.flutter3270.dev",
+      api_key: api_key,
       ipa: "./build/flutter_3270_dev.ipa",
       skip_waiting_for_build_processing: true,
       skip_submission: true,

@@ -23,6 +23,14 @@ For _fastlane_ installation instructions, see [Installing _fastlane_](https://do
 
 Build Development IPA (no upload)
 
+### ios certificates
+
+```sh
+[bundle exec] fastlane ios certificates
+```
+
+Setup certificates and provisioning profiles
+
 ### ios dev
 
 ```sh
