@@ -1,0 +1,76 @@
+default_platform(:ios)
+
+platform :ios do
+  desc "Build Development IPA (no upload)"
+  lane :dev_build do
+    # Flutter build
+    Dir.chdir("..") do
+      sh("flutter", "clean")
+      sh("flutter", "pub", "get")
+      sh("flutter", "build", "ios", "--release", "--no-codesign")
+    end
+
+    sh("pod", "install")
+
+    team_id = "K8L45AHLHB" # Từ xcrun altool --list-providers
+
+    # Update app identifier
+    update_app_identifier(
+      xcodeproj: "Runner.xcodeproj",
+      plist_path: "Runner/Info.plist",
+      app_identifier: "com.example.flutter3270.dev"
+    )
+
+    # Enable automatic signing
+    update_code_signing_settings(
+      use_automatic_signing: true,
+      team_id: team_id,
+      bundle_identifier: "com.example.flutter3270.dev",
+      path: "Runner.xcodeproj"
+    )
+
+    # Increment build number
+    increment_build_number(
+      xcodeproj: "Runner.xcodeproj"
+    )
+
+    # Build development version (không cần App Store Connect)
+    build_app(
+      workspace: "Runner.xcworkspace",
+      scheme: "dev",
+      configuration: "Release",
+      export_method: "app-store", # Development export
+      output_directory: "./build",
+      output_name: "flutter_3270_dev.ipa",
+      clean: true,
+      include_bitcode: false,
+      export_options: {
+        method: "app-store",
+        teamID: team_id,
+        signingStyle: "automatic",
+        uploadBitcode: false,
+        uploadSymbols: true,
+        compileBitcode: false
+      }
+    )
+
+    UI.success("✅ Development build completed: ./build/flutter_3270_dev.ipa")
+  end
+
+  desc "Build and upload to TestFlight"
+  lane :dev do
+    # Build development version trước
+    dev_build
+
+    # Sau đó upload manual
+    upload_to_testflight(
+      username: "ducvip131199@icloud.com",
+      app_identifier: "com.example.flutter3270.dev",
+      ipa: "./build/flutter_3270_dev.ipa",
+      skip_waiting_for_build_processing: true,
+      skip_submission: true,
+      distribute_external: false,
+      notify_external_testers: false
+    )
+  end
+end
